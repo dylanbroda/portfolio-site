@@ -1,0 +1,772 @@
+/* ---------- Reset & base ---------- */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --black: #060607;
+  --panel: #0c0c0e;
+  --white: #e8e8e3;
+  --gray: #6f7175;
+  --dim: #45474b;
+  --line: rgba(232,232,227,0.10);
+  --line-bright: rgba(232,232,227,0.22);
+  --accent: #1F7A3D;
+  --accent-hot: #2ECC71;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --mono: "SF Mono", "JetBrains Mono", "IBM Plex Mono", Menlo, Consolas, monospace;
+}
+
+html { scroll-behavior: smooth; }
+
+/* The header is fixed, so in-page jumps need to stop short of it. */
+main section[id] { scroll-margin-top: 72px; }
+
+body {
+  background: var(--black);
+  color: var(--white);
+  font-family: var(--mono);
+  font-size: 15px;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; }
+
+.prompt { color: var(--dim); margin-right: 0.6em; }
+
+/* ---------- Boot sequence ---------- */
+body.booting { overflow: hidden; }
+
+/* Hidden by default: without JS nothing would ever dismiss it, and the whole
+   site would sit behind a black screen. The fail-safe fades it out if the
+   script loads but dies before ending the boot. */
+.boot { display: none; }
+
+.js .boot {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--black);
+  display: flex;
+  animation: boot-failsafe 0.4s linear 6s forwards;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 4vw;
+  cursor: pointer;
+  transition: opacity 0.55s var(--ease);
+}
+
+.boot.done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes boot-failsafe {
+  to { opacity: 0; visibility: hidden; pointer-events: none; }
+}
+
+.boot-log {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 2;
+  color: var(--gray);
+  white-space: pre-wrap;
+  text-shadow: 0 0 18px rgba(232,232,227,0.12);
+}
+
+.boot-log .ok { color: var(--white); }
+
+.boot-skip {
+  position: absolute;
+  bottom: 30px;
+  right: 4vw;
+  font-size: 11px;
+  color: var(--dim);
+}
+
+/* ---------- Cursor binary trail ---------- */
+.cursor-trail {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 905;
+  overflow: hidden;
+}
+
+.trail-bit {
+  position: absolute;
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1;
+  color: var(--accent);
+  animation: trail-fade 900ms var(--ease) forwards;
+  will-change: opacity, transform;
+}
+
+@keyframes trail-fade {
+  0%   { opacity: 0.8; transform: translate(-50%, -50%); }
+  100% { opacity: 0; transform: translate(-50%, calc(-50% + 16px)); }
+}
+
+/* ---------- Texture layers ---------- */
+.grain,
+.scanlines,
+.vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 900;
+}
+
+.grain {
+  opacity: 0.055;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain-shift 0.9s steps(3) infinite;
+}
+
+@keyframes grain-shift {
+  0%   { transform: translate(0, 0); }
+  33%  { transform: translate(-2%, 1%); }
+  66%  { transform: translate(1%, -2%); }
+  100% { transform: translate(0, 0); }
+}
+
+.scanlines {
+  opacity: 0.35;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0,0,0,0) 0px,
+    rgba(0,0,0,0) 2px,
+    rgba(0,0,0,0.28) 3px,
+    rgba(0,0,0,0) 4px
+  );
+}
+
+.vignette {
+  background: radial-gradient(ellipse at 50% 45%,
+    rgba(0,0,0,0) 55%,
+    rgba(0,0,0,0.22) 85%,
+    rgba(0,0,0,0.45) 100%);
+}
+
+/* ---------- Header ---------- */
+.site-header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 950;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 4vw;
+  background: rgba(6,6,7,0.72);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+
+.logo {
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--white);
+}
+
+.nav { display: flex; gap: 32px; }
+
+.nav a {
+  font-size: 13px;
+  color: var(--gray);
+  position: relative;
+  transition: color 0.25s var(--ease);
+}
+
+.nav a::before {
+  content: "[";
+  opacity: 0;
+  margin-right: 4px;
+  transition: opacity 0.25s var(--ease);
+}
+
+.nav a::after {
+  content: "]";
+  opacity: 0;
+  margin-left: 4px;
+  transition: opacity 0.25s var(--ease);
+}
+
+.nav a:hover { color: var(--white); }
+.nav a:hover::before,
+.nav a:hover::after { opacity: 1; }
+
+.nav-toggle { display: none; background: none; border: none; cursor: pointer; }
+
+/* ---------- Hero ---------- */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 4vw;
+  border-bottom: 1px solid var(--line);
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(232,232,227,0.045), transparent 70%),
+    linear-gradient(180deg, var(--panel) 0%, var(--black) 100%);
+}
+
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--gray);
+  margin-bottom: 28px;
+}
+
+.hero h1 {
+  font-size: clamp(1.9rem, 5.2vw, 4.2rem);
+  font-weight: 500;
+  line-height: 1.18;
+  letter-spacing: -0.035em;
+  max-width: 22ch;
+  min-height: 2.4em;
+  text-shadow: 0 0 28px rgba(232,232,227,0.14);
+}
+
+.caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 1em;
+  background: var(--white);
+  vertical-align: -0.12em;
+  margin-left: 0.12em;
+  animation: blink 1.05s steps(1) infinite;
+}
+
+@keyframes blink {
+  0%, 50%   { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.hero-sub {
+  margin-top: 28px;
+  max-width: 52ch;
+  color: var(--gray);
+  font-size: 14px;
+}
+
+.hero-cta {
+  margin-top: 52px;
+  font-size: 13px;
+  width: fit-content;
+  padding: 10px 18px;
+  border: 1px solid var(--line-bright);
+  color: var(--gray);
+  transition: color 0.3s var(--ease), border-color 0.3s var(--ease), background 0.3s var(--ease);
+}
+
+.hero-cta:hover {
+  color: var(--white);
+  border-color: var(--white);
+  background: rgba(232,232,227,0.05);
+}
+
+/* ---------- Reel ---------- */
+.reel {
+  padding: 7vw 4vw;
+  border-bottom: 1px solid var(--line);
+}
+
+/* 4:5 to match the source (1080x1350). Capped and centred — a full-bleed
+   portrait frame would be taller than most viewports. */
+.reel-frame {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  aspect-ratio: 4/5;
+  border: 1px solid var(--line-bright);
+  background:
+    repeating-linear-gradient(45deg,
+      rgba(232,232,227,0.014) 0px,
+      rgba(232,232,227,0.014) 1px,
+      transparent 1px,
+      transparent 9px),
+    var(--panel);
+}
+
+.reel-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--black);
+}
+
+/* Autoplay is only allowed while muted, so a spoken reel needs an obvious
+   way back to sound. Native controls stay for full agency. */
+.reel-sound {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--white);
+  background: rgba(6,6,7,0.7);
+  border: 1px solid var(--line-bright);
+  padding: 5px 10px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: color 0.25s var(--ease), border-color 0.25s var(--ease);
+}
+
+.reel-sound:hover,
+.reel-sound:focus-visible {
+  color: var(--accent-hot);
+  border-color: var(--accent-hot);
+}
+
+.frame-label {
+  position: absolute;
+  top: -1px; left: -1px;
+  padding: 5px 12px;
+  font-size: 11px;
+  color: var(--gray);
+  border: 1px solid var(--line-bright);
+  border-left: none;
+  border-top: none;
+  background: var(--black);
+}
+
+/* ---------- Section head ---------- */
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 6vw 4vw 3vw;
+}
+
+.section-head h2 {
+  font-size: clamp(1.3rem, 2.6vw, 2rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.section-note {
+  font-size: 12px;
+  color: var(--dim);
+}
+
+/* ---------- Work grid ---------- */
+.work { border-bottom: 1px solid var(--line); }
+
+.work-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--line);
+}
+
+.work-item {
+  position: relative;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 4vw 2vw;
+  transition: background 0.35s var(--ease);
+}
+
+.work-item:hover { background: rgba(232,232,227,0.028); }
+
+.work-item::after {
+  content: attr(data-category);
+  position: absolute;
+  top: 16px; right: 20px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: lowercase;
+  color: var(--dim);
+  opacity: 0;
+  transition: opacity 0.3s var(--ease);
+}
+
+.work-item:hover::after { opacity: 1; }
+
+.work-thumb {
+  aspect-ratio: 4/5;
+  border: 1px solid var(--line-bright);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  overflow: hidden;
+  filter: grayscale(1) contrast(1.08);
+  background:
+    repeating-linear-gradient(45deg,
+      rgba(232,232,227,0.012) 0px,
+      rgba(232,232,227,0.012) 1px,
+      transparent 1px,
+      transparent 8px),
+    var(--panel);
+  transition: border-color 0.4s var(--ease), background 0.4s var(--ease);
+}
+
+.work-item:hover .work-thumb {
+  border-color: var(--line-bright);
+  background:
+    repeating-linear-gradient(45deg,
+      rgba(232,232,227,0.03) 0px,
+      rgba(232,232,227,0.03) 1px,
+      transparent 1px,
+      transparent 8px),
+    var(--panel);
+}
+
+.work-thumb span {
+  font-size: 12px;
+  color: var(--gray);
+  letter-spacing: 0.12em;
+}
+
+.work-meta h3 {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 5px;
+  color: var(--white);
+}
+
+.work-meta p {
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.work-stats {
+  display: flex;
+  gap: 22px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.work-stats li {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.work-stats .k {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+}
+
+.work-stats .v {
+  font-size: 14px;
+  color: var(--white);
+  text-shadow: 0 0 16px rgba(232,232,227,0.16);
+}
+
+/* ---------- Impact ---------- */
+.impact { border-bottom: 1px solid var(--line); }
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--line);
+}
+
+.impact-cell {
+  padding: 3.5vw 2vw;
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: background 0.35s var(--ease);
+}
+
+.impact-cell:last-child { border-right: none; }
+.impact-cell:hover { background: rgba(232,232,227,0.028); }
+
+.impact-num {
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  /* Plain-rgba fallback first; browsers without color-mix keep the static glow. */
+  text-shadow: 0 0 28px rgba(31,122,61,0.45);
+  text-shadow: 0 0 28px color-mix(in srgb, currentColor 45%, transparent);
+  transition: color 0.16s var(--ease);
+}
+
+/* Flicker fires from the whole cell, so the digits aren't a pixel-hunt target. */
+.impact-cell:hover .impact-num,
+.impact-cell:focus-within .impact-num {
+  color: var(--accent-hot);
+  text-shadow: 0 0 34px rgba(46,204,113,0.6);
+  text-shadow: 0 0 34px color-mix(in srgb, currentColor 60%, transparent);
+  animation: num-flicker 0.52s steps(1, end);
+}
+
+/* Hard steps rather than eased fades — reads as an electrical flicker. */
+@keyframes num-flicker {
+  0%   { opacity: 0.4; }
+  9%   { opacity: 1; }
+  14%  { opacity: 0.5; }
+  21%  { opacity: 1; }
+  30%  { opacity: 0.68; }
+  36%  { opacity: 1; }
+  48%  { opacity: 0.85; }
+  55%  { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+.impact-label {
+  font-size: 12px;
+  color: var(--gray);
+  letter-spacing: 0.04em;
+}
+
+.impact-note {
+  font-size: 11px;
+  color: var(--dim);
+  line-height: 1.55;
+  max-width: 32ch;
+}
+
+/* ---------- Accounts scaled ---------- */
+.accounts { border-bottom: 1px solid var(--line); }
+
+.accounts-wrap {
+  padding: 0 4vw 5vw;
+  overflow-x: auto;
+}
+
+.accounts-table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.accounts-table th {
+  text-align: left;
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+  padding: 0 20px 14px 0;
+  border-bottom: 1px solid var(--line-bright);
+  white-space: nowrap;
+}
+
+.accounts-table td {
+  padding: 18px 20px 18px 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--gray);
+  white-space: nowrap;
+  transition: color 0.3s var(--ease);
+}
+
+.accounts-table tbody tr { transition: background 0.3s var(--ease); }
+.accounts-table tbody tr:hover { background: rgba(232,232,227,0.028); }
+.accounts-table tbody tr:hover td { color: var(--white); }
+
+/* These are qualified with `td` on purpose. A bare `.acct-handle` (0,1,0)
+   loses to `.accounts-table td` (0,1,1) above, which silently flattened every
+   column to --gray. `td.acct-*` scores (0,2,1) and wins. */
+.accounts-table td.acct-handle { color: var(--white); }
+.accounts-table td.acct-from { color: var(--dim); }
+.accounts-table td.acct-window { color: var(--dim); }
+
+.accounts-table td.acct-to {
+  color: var(--white);
+  text-shadow: 0 0 16px rgba(232,232,227,0.18);
+}
+
+/* Growth gets the same accent treatment as the impact numbers. */
+.accounts-table td.acct-delta {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 16px rgba(31,122,61,0.4);
+  text-shadow: 0 0 16px color-mix(in srgb, currentColor 40%, transparent);
+  transition: color 0.16s var(--ease);
+}
+
+/* Row-level trigger, matching the impact cells. Scores (0,3,2), so it outranks
+   both `tr:hover td` (0,2,3) and `td.acct-delta` (0,2,1). */
+.accounts-table tbody tr:hover .acct-delta,
+.accounts-table tbody tr:focus-within .acct-delta {
+  color: var(--accent-hot);
+  text-shadow: 0 0 22px rgba(46,204,113,0.55);
+  text-shadow: 0 0 22px color-mix(in srgb, currentColor 55%, transparent);
+  animation: num-flicker 0.52s steps(1, end);
+}
+
+/* ---------- About ---------- */
+.about { border-bottom: 1px solid var(--line); }
+
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  gap: 5vw;
+  padding: 0 4vw 5vw;
+}
+
+.about-text p {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--white);
+}
+
+.timeline li {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 24px;
+  padding: 20px 0;
+  border-top: 1px solid var(--line);
+  transition: background 0.3s var(--ease);
+}
+
+.timeline li:last-child { border-bottom: 1px solid var(--line); }
+.timeline li:hover { background: rgba(232,232,227,0.022); }
+
+.timeline-year {
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.timeline h4 {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.timeline p {
+  font-size: 13px;
+  color: var(--gray);
+  line-height: 1.6;
+}
+
+/* ---------- Contact ---------- */
+.contact {
+  min-height: 66vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 8vw 4vw;
+  background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(232,232,227,0.04), transparent 70%);
+}
+
+.contact h2 {
+  font-size: clamp(1.4rem, 3.6vw, 2.6rem);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  margin-bottom: 36px;
+  text-shadow: 0 0 26px rgba(232,232,227,0.14);
+}
+
+.socials {
+  display: flex;
+  gap: 34px;
+  margin-top: 8px;
+}
+
+.socials a {
+  font-size: 13px;
+  color: var(--gray);
+  transition: color 0.3s var(--ease);
+}
+
+.socials a:hover { color: var(--white); }
+
+/* ---------- Footer ---------- */
+.site-footer {
+  padding: 24px 4vw;
+  text-align: center;
+  border-top: 1px solid var(--line);
+}
+
+.site-footer p {
+  font-size: 11px;
+  color: var(--dim);
+}
+
+/* ---------- Reveal animation ---------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+}
+
+.reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Table rows: fade only — transforms on <tr> can disturb table layout. */
+.accounts-table tbody tr.reveal { transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .js .boot { display: none; }
+  .grain { animation: none; }
+  /* Keep the colour shift, drop the strobing. */
+  .impact-cell:hover .impact-num,
+  .impact-cell:focus-within .impact-num,
+  .accounts-table tbody tr:hover .acct-delta,
+  .accounts-table tbody tr:focus-within .acct-delta { animation: none; }
+  .caret { animation: none; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  html { scroll-behavior: auto; }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .nav { display: none; }
+  .nav.open {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    padding: 8px 4vw 16px;
+    /* Solid, not translucent: a backdrop-filter nested inside the header's
+       own backdrop-filter doesn't blur, and the headline bled through. */
+    background: var(--black);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav.open a {
+    padding: 14px 0;
+    font-size: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .nav.open a:last-child { border-bottom: none; }
+  .nav-toggle { display: flex; flex-direction: column; gap: 5px; padding: 10px; margin-right: -10px; }
+  .nav-toggle span { width: 20px; height: 1px; background: var(--white); }
+
+  .work-grid { grid-template-columns: repeat(2, 1fr); }
+  /* An odd item count leaves the last card alone in its row — drop its right
+     border so there's no rule dangling into the empty cell. */
+  .work-item:last-child { border-right: none; }
+  .about-grid { grid-template-columns: 1fr; }
+
+  .impact-grid { grid-template-columns: repeat(2, 1fr); }
+  .impact-cell:nth-child(2) { border-right: none; }
+  .impact-cell:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+}
+
+@media (max-width: 560px) {
+  .work-grid { grid-template-columns: 1fr; }
+  .work-item { border-right: none; }
+
+  .impact-grid { grid-template-columns: 1fr; }
+  .impact-cell {
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+  .impact-cell:last-child { border-bottom: none; }
+
+  .hero h1 { min-height: 3.6em; }
+}
