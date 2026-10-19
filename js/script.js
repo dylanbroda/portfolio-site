@@ -251,56 +251,6 @@ document.querySelectorAll(".acct-window[data-start]").forEach((td) => {
   td.textContent = months < 1 ? "<1 mo" : `${String(months).padStart(2, "0")} mo`;
 });
 
-/* ---------- Live follower counts ---------- */
-// data/accounts.json is refreshed daily by a GitHub Action. Rows with a
-// data-handle take their "current" figure from it; rows also marked
-// data-growth="auto" recompute growth from "start". Anything missing or
-// malformed leaves the markup value in place.
-const liveRows = document.querySelectorAll(".accounts-table tbody tr[data-handle]");
-
-if (liveRows.length && window.fetch) {
-  const parseCount = (text) => {
-    const m = String(text).trim().match(/^([\d.,]+)\s*([KkMm])?$/);
-    if (!m) return null;
-    const n = parseFloat(m[1].replace(/,/g, ""));
-    const mult = { k: 1e3, m: 1e6 }[(m[2] || "").toLowerCase()] || 1;
-    return isFinite(n) ? n * mult : null;
-  };
-
-  const formatCount = (n) => {
-    const trim = (x) => x.replace(/\.0$/, "");
-    if (n >= 1e6) return `${trim((n / 1e6).toFixed(1))}M`;
-    if (n >= 1e5) return `${Math.round(n / 1e3)}K`;
-    if (n >= 1e3) return `${trim((n / 1e3).toFixed(1))}K`;
-    return String(n);
-  };
-
-  fetch("data/accounts.json", { cache: "no-cache" })
-    .then((res) => (res.ok ? res.json() : null))
-    .then((data) => {
-      const accounts = data && data.accounts;
-      if (!accounts) return;
-      liveRows.forEach((row) => {
-        const entry = accounts[row.dataset.handle];
-        const followers = entry && entry.followers;
-        if (!Number.isInteger(followers) || followers < 0) return;
-
-        const toCell = row.querySelector(".acct-to");
-        if (toCell) toCell.textContent = formatCount(followers);
-
-        if (row.dataset.growth === "auto") {
-          const start = parseCount(row.querySelector(".acct-from")?.textContent);
-          const deltaCell = row.querySelector(".acct-delta");
-          if (start > 0 && deltaCell) {
-            const pct = Math.round(((followers - start) / start) * 100);
-            deltaCell.textContent = `${pct >= 0 ? "+" : "-"}${Math.abs(pct)}%`;
-          }
-        }
-      });
-    })
-    .catch(() => {}); // offline or file missing: markup values stand
-}
-
 /* ---------- Featured reel ---------- */
 const reelVideo = document.querySelector(".reel-video");
 const reelSound = document.querySelector(".reel-sound");
