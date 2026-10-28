@@ -399,7 +399,8 @@ body.booting { overflow: hidden; }
 .marquee-track {
   display: flex;
   width: max-content;
-  animation: marquee 32s linear infinite;
+  /* ~44px/s at desktop width; lengthen this if more logos are added. */
+  animation: marquee 88s linear infinite;
 }
 
 .marquee:hover .marquee-track { animation-play-state: paused; }
