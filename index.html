@@ -7,12 +7,16 @@
 <meta name="description" content="Dylan Broda — brand strategist and social lead. $1.12M in attributed revenue, 137.6M organic views, and three accounts scaled.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23060607'/%3E%3Ctext x='4' y='22' font-family='monospace' font-size='16' fill='%232ECC71'%3E%3E_%3C/text%3E%3C/svg%3E">
 <script>document.documentElement.classList.add("js");</script>
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=11">
 </head>
 <body>
 
 <div class="boot" id="boot" role="status" aria-label="Loading">
   <pre class="boot-log" id="bootLog"></pre>
+  <div class="boot-progress" role="progressbar" aria-label="Loading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+    <span class="boot-bar"><span class="boot-fill" id="bootFill"></span></span>
+    <span class="boot-pct" id="bootPct">0%</span>
+  </div>
   <span class="boot-skip">[ click to skip ]</span>
 </div>
 
@@ -38,28 +42,123 @@
 
   <!-- HERO -->
   <section class="hero">
-    <p class="eyebrow"><span class="prompt">&gt;</span> brand strategist / social lead</p>
-    <h1 class="type-line">accelerating brand growth and revenue.</h1>
-    <p class="hero-sub">Placeholder tagline — replace with a line about the kind of work you do and the results you drive for the brands you work with.</p>
-    <a href="#work" class="hero-cta"><span class="prompt">&gt;</span> view_work</a>
-  </section>
-
-  <!-- FEATURED REEL -->
-  <section class="reel">
-    <div class="reel-frame">
-      <div class="frame-label">reel.mp4</div>
+    <div class="hero-media" aria-hidden="true">
       <video
-        class="reel-video"
-        src="assets/reel.mp4"
-        poster="assets/reel-poster.jpg"
+        class="hero-video"
+        src="assets/hero.mp4"
+        poster="assets/hero-poster.jpg"
         autoplay
         muted
         loop
         playsinline
-        controls
         preload="auto"
-        aria-label="Featured reel — ai is not here to replace you"></video>
-      <button class="reel-sound" type="button" aria-pressed="false">[ unmute ]</button>
+        disablepictureinpicture
+        tabindex="-1"></video>
+    </div>
+    <div class="hero-copy">
+      <p class="eyebrow"><span class="prompt">&gt;</span> brand strategist / social lead</p>
+      <h1 class="type-line">accelerating brand growth and revenue.</h1>
+      <p class="hero-sub">Placeholder tagline — replace with a line about the kind of work you do and the results you drive for the brands you work with.</p>
+      <a href="#work" class="hero-cta"><span class="prompt">&gt;</span> view_work</a>
+    </div>
+    <figure class="hero-portrait">
+      <div class="frame-label">dylan.jpg</div>
+      <img src="assets/headshot.jpg" alt="Dylan Broda" width="792" height="1080">
+    </figure>
+  </section>
+
+  <!-- BRANDS MARQUEE -->
+  <section class="brands" aria-label="Brands I've worked with">
+    <p class="brands-label"><span class="prompt">&gt;</span> worked_with</p>
+    <div class="marquee">
+      <div class="marquee-track">
+        <ul class="marquee-list">
+          <li style="--logo-h: 26px"><img src="assets/brands/notion.svg" alt="Notion"></li>
+          <li style="--logo-h: 30px"><img src="assets/brands/adobe.svg" alt="Adobe"></li>
+          <li style="--logo-h: 40px"><img src="assets/brands/heygen.png" alt="HeyGen"></li>
+          <li style="--logo-h: 26px"><img src="assets/brands/flora.svg" alt=""><span>flora</span></li>
+          <li style="--logo-h: 22px"><img src="assets/brands/im8.svg" alt="IM8"></li>
+          <li style="--logo-h: 24px"><img src="assets/brands/hexclad.svg" alt="HexClad"></li>
+          <li><span>ninja</span></li>
+        </ul>
+        <!-- Second copy makes the loop seamless; hidden from screen readers. -->
+        <ul class="marquee-list" aria-hidden="true">
+          <li style="--logo-h: 26px"><img src="assets/brands/notion.svg" alt="Notion"></li>
+          <li style="--logo-h: 30px"><img src="assets/brands/adobe.svg" alt="Adobe"></li>
+          <li style="--logo-h: 40px"><img src="assets/brands/heygen.png" alt="HeyGen"></li>
+          <li style="--logo-h: 26px"><img src="assets/brands/flora.svg" alt=""><span>flora</span></li>
+          <li style="--logo-h: 22px"><img src="assets/brands/im8.svg" alt="IM8"></li>
+          <li style="--logo-h: 24px"><img src="assets/brands/hexclad.svg" alt="HexClad"></li>
+          <li><span>ninja</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- REEL CAROUSEL -->
+  <section id="reel" class="reel">
+    <div class="section-head">
+      <h2><span class="prompt">&gt;</span> reel</h2>
+      <p class="section-note">[ 11 videos ]</p>
+    </div>
+
+    <div class="carousel" tabindex="0" role="region" aria-roledescription="carousel" aria-label="Video reel. Use the left and right arrow keys to browse.">
+      <div class="carousel-stage">
+        <figure class="slide" data-title="ai is not here to replace you">
+          <div class="frame-label">#046</div>
+          <video class="slide-video" data-src="assets/reel/046.mp4" poster="assets/reel/046.jpg" muted loop playsinline preload="none" aria-label="#046 ai is not here to replace you"></video>
+        </figure>
+        <figure class="slide" data-title="boxed text flash effect tut">
+          <div class="frame-label">#065</div>
+          <video class="slide-video" data-src="assets/reel/065.mp4" poster="assets/reel/065.jpg" muted loop playsinline preload="none" aria-label="#065 boxed text flash effect tut"></video>
+        </figure>
+        <figure class="slide" data-title="ai video generation guide">
+          <div class="frame-label">#061</div>
+          <video class="slide-video" data-src="assets/reel/061.mp4" poster="assets/reel/061.jpg" muted loop playsinline preload="none" aria-label="#061 ai video generation guide"></video>
+        </figure>
+        <figure class="slide" data-title="volume negates luck">
+          <div class="frame-label">#056</div>
+          <video class="slide-video" data-src="assets/reel/056.mp4" poster="assets/reel/056.jpg" muted loop playsinline preload="none" aria-label="#056 volume negates luck"></video>
+        </figure>
+        <figure class="slide" data-title="severance">
+          <div class="frame-label">#054</div>
+          <video class="slide-video" data-src="assets/reel/054.mp4" poster="assets/reel/054.jpg" muted loop playsinline preload="none" aria-label="#054 severance"></video>
+        </figure>
+        <figure class="slide" data-title="flora ai techniques">
+          <div class="frame-label">#044</div>
+          <video class="slide-video" data-src="assets/reel/044.mp4" poster="assets/reel/044.jpg" muted loop playsinline preload="none" aria-label="#044 flora ai techniques"></video>
+        </figure>
+        <figure class="slide" data-title="4x3 trial">
+          <div class="frame-label">#040</div>
+          <video class="slide-video" data-src="assets/reel/040.mp4" poster="assets/reel/040.jpg" muted loop playsinline preload="none" aria-label="#040 4x3 trial"></video>
+        </figure>
+        <figure class="slide" data-title="ai transition tut">
+          <div class="frame-label">#036</div>
+          <video class="slide-video" data-src="assets/reel/036.mp4" poster="assets/reel/036.jpg" muted loop playsinline preload="none" aria-label="#036 ai transition tut"></video>
+        </figure>
+        <figure class="slide" data-title="exposing rendyr font">
+          <div class="frame-label">#035</div>
+          <video class="slide-video" data-src="assets/reel/035.mp4" poster="assets/reel/035.jpg" muted loop playsinline preload="none" aria-label="#035 exposing rendyr font"></video>
+        </figure>
+        <figure class="slide" data-title="work life balance in your 20s">
+          <div class="frame-label">#014</div>
+          <video class="slide-video" data-src="assets/reel/014.mp4" poster="assets/reel/014.jpg" muted loop playsinline preload="none" aria-label="#014 work life balance in your 20s"></video>
+        </figure>
+        <figure class="slide" data-title="rec.">
+          <div class="frame-label">#011</div>
+          <video class="slide-video" data-src="assets/reel/011.mp4" poster="assets/reel/011.jpg" muted loop playsinline preload="none" aria-label="#011 rec."></video>
+        </figure>
+      </div>
+
+      <div class="carousel-controls">
+        <button class="carousel-btn carousel-prev" type="button" aria-label="Previous video">[ &larr; ]</button>
+        <p class="carousel-caption" aria-live="polite">
+          <span class="carousel-count">01 / 11</span>
+          <span class="carousel-title">ai is not here to replace you</span>
+        </p>
+        <button class="carousel-btn carousel-sound" type="button" aria-pressed="false">[ unmute ]</button>
+        <button class="carousel-btn carousel-next" type="button" aria-label="Next video">[ &rarr; ]</button>
+      </div>
     </div>
   </section>
 
@@ -98,15 +197,18 @@
   <section id="work" class="work">
     <div class="section-head">
       <h2><span class="prompt">&gt;</span> selected_work</h2>
-      <p class="section-note">[ 01 — 03 ]</p>
+      <p class="section-note">[ 01 — 04 ]</p>
     </div>
 
     <div class="work-grid">
 
       <article class="work-item" data-category="Creator">
-        <div class="work-thumb"><span>01</span></div>
+        <div class="work-thumb">
+          <span class="work-num">01</span>
+          <img class="work-avatar" src="assets/work/josephabell.jpg" alt="@thejosephabell on Instagram" width="150" height="150" loading="lazy">
+        </div>
         <div class="work-meta">
-          <h3>josephabell</h3>
+          <h3><a class="work-link" href="https://www.instagram.com/thejosephabell/" target="_blank" rel="noopener noreferrer" aria-label="@thejosephabell on Instagram (opens in a new tab)">josephabell</a></h3>
           <p>scope / role — year</p>
           <ul class="work-stats">
             <li><span class="k">views</span><span class="v">0.0M</span></li>
@@ -116,9 +218,12 @@
       </article>
 
       <article class="work-item" data-category="Owned Brand">
-        <div class="work-thumb"><span>02</span></div>
+        <div class="work-thumb">
+          <span class="work-num">02</span>
+          <img class="work-avatar" src="assets/work/rendyr.jpg" alt="@rendyr.video on Instagram" width="150" height="150" loading="lazy">
+        </div>
         <div class="work-meta">
-          <h3>rendyr</h3>
+          <h3><a class="work-link" href="https://www.instagram.com/rendyr.video/" target="_blank" rel="noopener noreferrer" aria-label="@rendyr.video on Instagram (opens in a new tab)">rendyr</a></h3>
           <p>scope / role — year</p>
           <ul class="work-stats">
             <li><span class="k">views</span><span class="v">0.0M</span></li>
@@ -128,9 +233,27 @@
       </article>
 
       <article class="work-item" data-category="SaaS">
-        <div class="work-thumb"><span>03</span></div>
+        <div class="work-thumb">
+          <span class="work-num">03</span>
+          <img class="work-avatar" src="assets/work/heygen.jpg" alt="@heygen_official on Instagram" width="150" height="150" loading="lazy">
+        </div>
         <div class="work-meta">
-          <h3>heygen</h3>
+          <h3><a class="work-link" href="https://www.instagram.com/heygen_official/" target="_blank" rel="noopener noreferrer" aria-label="@heygen_official on Instagram (opens in a new tab)">heygen</a></h3>
+          <p>scope / role — year</p>
+          <ul class="work-stats">
+            <li><span class="k">views</span><span class="v">0.0M</span></li>
+            <li><span class="k">revenue</span><span class="v">$00K</span></li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="work-item" data-category="AI Avatar">
+        <div class="work-thumb">
+          <span class="work-num">04</span>
+          <img class="work-avatar" src="assets/work/heyjoshuaxu.jpg" alt="@heyjoshuaxu on Instagram" width="150" height="150" loading="lazy">
+        </div>
+        <div class="work-meta">
+          <h3><a class="work-link" href="https://www.instagram.com/heyjoshuaxu/" target="_blank" rel="noopener noreferrer" aria-label="@heyjoshuaxu on Instagram (opens in a new tab)">heyjoshuaxu</a></h3>
           <p>scope / role — year</p>
           <ul class="work-stats">
             <li><span class="k">views</span><span class="v">0.0M</span></li>
@@ -253,6 +376,6 @@
   <p>&copy; <span id="year"></span> dylan_broda — all rights reserved</p>
 </footer>
 
-<script src="js/script.js"></script>
+<script src="js/script.js?v=3"></script>
 </body>
 </html>

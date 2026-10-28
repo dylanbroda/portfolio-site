@@ -65,7 +65,7 @@ const bootLog = document.getElementById("bootLog");
 const BOOT_LINES = [
   ["booting portfolio.sys", "ok"],
   ["mounting /work", "ok"],
-  ["loading reel.mp4", "ok"],
+  ["loading /reel", "ok"],
   ["indexing revenue + reach", "ok"],
   ["syncing growth data", "ok"],
 ];
@@ -93,27 +93,80 @@ if (!boot || reduceMotion) {
 } else {
   document.body.classList.add("booting");
 
+  const bootBar = boot.querySelector(".boot-progress");
+  const bootFill = document.getElementById("bootFill");
+  const bootPct = document.getElementById("bootPct");
+
+  // Progress bar. The displayed value chases a target that jumps forward
+  // unevenly as each boot line lands. Every tick closes a random share of the
+  // gap at a pace that shifts now and then, with the odd stall, so it surges
+  // and hesitates instead of filling at a constant rate. Steps are scaled by
+  // real elapsed time, so a throttled background tab lands in the right place
+  // rather than crawling.
+  let shown = 0;
+  let target = 0;
+  let pace = 4;
+  let lastTick = performance.now();
+  let onFull = null;
+
+  const render = () => {
+    const v = Math.floor(shown);
+    bootFill.style.width = `${shown}%`;
+    bootPct.textContent = `${v}%`;
+    bootBar.setAttribute("aria-valuenow", String(v));
+  };
+
+  const advanceTo = (t) => {
+    target = Math.min(100, Math.max(target, t));
+  };
+
   let finished = false;
   const finishOnce = () => {
     if (finished) return;
     finished = true;
+    shown = 100;
+    render();
     endBoot();
+  };
+
+  const tick = () => {
+    if (finished) return;
+    const now = performance.now();
+    const dt = (now - lastTick) / 1000;
+    lastTick = now;
+    if (Math.random() < 0.08) pace = 1.5 + Math.random() * 8;
+    const stalled = target < 100 && Math.random() < 0.12;
+    if (!stalled) shown += (target - shown) * (1 - Math.exp(-dt * pace));
+    if (target >= 100 && 100 - shown < 0.6) {
+      shown = 100;
+      render();
+      if (onFull) onFull();
+      return;
+    }
+    render();
+    setTimeout(tick, 30 + Math.random() * 40);
   };
 
   boot.addEventListener("click", finishOnce);
   window.addEventListener("keydown", finishOnce, { once: true });
+  // Never hold the page longer than this, whatever the timers are doing.
+  setTimeout(finishOnce, 5000);
 
   let i = 0;
   const step = () => {
     if (finished) return;
     if (i >= BOOT_LINES.length) {
-      setTimeout(finishOnce, 380);
+      pace = 9; // final surge to 100
+      advanceTo(100);
+      onFull = () => setTimeout(finishOnce, 350);
       return;
     }
     const [label, status] = BOOT_LINES[i];
     const line = document.createElement("span");
     line.textContent = bootPrefix(label);
     bootLog.appendChild(line);
+    // A little creep while the line is still "working".
+    advanceTo((i / BOOT_LINES.length) * 88 + 4 + Math.random() * 6);
 
     setTimeout(() => {
       if (finished) return;
@@ -123,10 +176,12 @@ if (!boot || reduceMotion) {
       line.appendChild(badge);
       line.appendChild(document.createTextNode("\n"));
       i++;
+      advanceTo((i / BOOT_LINES.length) * 88 + (Math.random() * 8 - 4));
       setTimeout(step, 80 + Math.random() * 110);
     }, 110 + Math.random() * 170);
   };
   setTimeout(step, 220);
+  setTimeout(tick, 220);
 }
 
 /* ---------- Impact counters ---------- */
@@ -251,38 +306,180 @@ document.querySelectorAll(".acct-window[data-start]").forEach((td) => {
   td.textContent = months < 1 ? "<1 mo" : `${String(months).padStart(2, "0")} mo`;
 });
 
-/* ---------- Featured reel ---------- */
-const reelVideo = document.querySelector(".reel-video");
-const reelSound = document.querySelector(".reel-sound");
+/* ---------- Hero background ---------- */
+// A looping background is continuous motion: for reduced-motion visitors stop
+// it and leave the poster frame showing.
+const heroVideo = document.querySelector(".hero-video");
+if (heroVideo && reduceMotion) {
+  heroVideo.removeAttribute("autoplay");
+  heroVideo.pause();
+  heroVideo.currentTime = 0;
+}
 
-if (reelVideo) {
-  // An autoplaying loop is continuous motion — don't force it on anyone who
-  // asked for less of it.
-  if (reduceMotion) {
-    reelVideo.autoplay = false;
-    reelVideo.removeAttribute("autoplay");
-    reelVideo.pause();
-  }
+/* ---------- Reel carousel ---------- */
+// Coverflow carousel. Only the centred video loads and plays: the others show
+// their poster and get their source the first time they're brought to the
+// centre, so a visitor downloads one clip at a time rather than all of them.
+const carousel = document.querySelector(".carousel");
 
-  if (reelSound) {
-    // volumechange is the single source of truth, so the label stays correct
-    // whether the user toggles via this button or the native controls.
-    const syncSoundLabel = () => {
-      const on = !reelVideo.muted;
-      reelSound.textContent = on ? "[ mute ]" : "[ unmute ]";
-      reelSound.setAttribute("aria-pressed", String(on));
-    };
+if (carousel) {
+  const slides = Array.from(carousel.querySelectorAll(".slide"));
+  const videos = slides.map((s) => s.querySelector(".slide-video"));
+  const countEl = carousel.querySelector(".carousel-count");
+  const titleEl = carousel.querySelector(".carousel-title");
+  const soundBtn = carousel.querySelector(".carousel-sound");
+  const n = slides.length;
+  const pad = (x) => String(x).padStart(2, "0");
 
-    reelSound.addEventListener("click", () => {
-      reelVideo.muted = !reelVideo.muted;
-      if (!reelVideo.muted && reelVideo.paused) {
-        reelVideo.play().catch(() => {});
+  let active = 0;
+  let soundOn = false;
+  let inView = false;
+
+  // Shortest signed distance around the ring, so the carousel wraps.
+  const offsetOf = (i) => {
+    let d = i - active;
+    if (d > n / 2) d -= n;
+    if (d < -n / 2) d += n;
+    return d;
+  };
+
+  // Cards sit around a cylinder: each is turned by its offset times an equal
+  // share of 360deg, then pushed out to the rim. The ring's centre is set back
+  // by its radius so the front card stays at full size. Because every card's
+  // transform has the same shape, the browser animates them along the arc.
+  const layout = () => {
+    const cardW = slides[0].offsetWidth;
+    const narrow = window.innerWidth <= 560;
+    const angle = 360 / n;
+    // Radius at which neighbouring cards just meet, plus a small gap.
+    const radius = (cardW / 2 / Math.tan(Math.PI / n)) * 1.08;
+    const maxVisible = narrow ? 1 : 2;
+    slides.forEach((slide, i) => {
+      const d = offsetOf(i);
+      const a = Math.abs(d);
+      const hidden = a > maxVisible;
+      // How squarely the card faces the viewer: 1 at the front, 0 edge-on.
+      const facing = Math.cos((d * angle * Math.PI) / 180);
+      slide.style.transform =
+        `translateZ(${-radius}px) rotateY(${d * angle}deg) translateZ(${radius}px)`;
+      slide.style.opacity = hidden ? "0" : String(Math.max(0, 0.25 + 0.75 * facing));
+      slide.style.filter = a ? `brightness(${(0.35 + 0.5 * facing).toFixed(2)})` : "none";
+      slide.style.zIndex = String(100 - a);
+      slide.classList.toggle("is-active", d === 0);
+      slide.classList.toggle("is-hidden", hidden);
+      slide.setAttribute("aria-hidden", String(d !== 0));
+    });
+  };
+
+  const load = (v) => {
+    if (!v.getAttribute("src") && v.dataset.src) v.src = v.dataset.src;
+  };
+
+  const setSound = (on) => {
+    soundOn = on;
+    soundBtn.textContent = on ? "[ mute ]" : "[ unmute ]";
+    soundBtn.setAttribute("aria-pressed", String(on));
+    videos.forEach((v) => { v.muted = !on; });
+  };
+
+  const play = (v) => {
+    load(v);
+    v.muted = !soundOn;
+    v.play().catch(() => {
+      // Playback with sound can be refused before any user gesture; fall back
+      // to muted rather than leaving the card frozen.
+      if (!v.muted) {
+        setSound(false);
+        v.play().catch(() => {});
       }
     });
+  };
 
-    reelVideo.addEventListener("volumechange", syncSoundLabel);
-    syncSoundLabel();
+  // Autoplay the centred clip while the carousel is on screen. Reduced-motion
+  // visitors get posters and start a clip themselves by clicking it.
+  const syncPlayback = () => {
+    videos.forEach((v, i) => {
+      if (i !== active && !v.paused) v.pause();
+    });
+    if (inView && !reduceMotion) play(videos[active]);
+    else videos[active].pause();
+  };
+
+  const goTo = (i) => {
+    const next = ((i % n) + n) % n;
+    if (next !== active) {
+      videos[active].pause();
+      active = next;
+      if (videos[active].getAttribute("src")) videos[active].currentTime = 0;
+    }
+    layout();
+    countEl.textContent = `${pad(active + 1)} / ${pad(n)}`;
+    titleEl.textContent = slides[active].dataset.title;
+    syncPlayback();
+  };
+
+  carousel.querySelector(".carousel-prev").addEventListener("click", () => goTo(active - 1));
+  carousel.querySelector(".carousel-next").addEventListener("click", () => goTo(active + 1));
+
+  soundBtn.addEventListener("click", () => {
+    setSound(!soundOn);
+    if (soundOn) play(videos[active]); // the click is the gesture that allows sound
+  });
+
+  // Swipe on touch screens; a swipe must not also count as a click on a card.
+  let downX = null;
+  let swiped = false;
+  const stage = carousel.querySelector(".carousel-stage");
+  stage.addEventListener("pointerdown", (e) => { downX = e.clientX; swiped = false; });
+  stage.addEventListener("pointerup", (e) => {
+    if (downX === null) return;
+    const dx = e.clientX - downX;
+    downX = null;
+    if (Math.abs(dx) > 40) {
+      swiped = true;
+      goTo(active + (dx < 0 ? 1 : -1));
+    }
+  });
+
+  slides.forEach((slide, i) => {
+    slide.addEventListener("click", () => {
+      if (swiped) return;
+      if (i !== active) return goTo(i);
+      const v = videos[active]; // clicking the centre card toggles playback
+      if (v.paused) play(v);
+      else v.pause();
+    });
+  });
+
+  carousel.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft") { e.preventDefault(); goTo(active - 1); }
+    if (e.key === "ArrowRight") { e.preventDefault(); goTo(active + 1); }
+  });
+
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(
+      ([entry]) => {
+        inView = entry.isIntersecting;
+        syncPlayback();
+      },
+      { threshold: 0.35 }
+    ).observe(carousel);
+  } else {
+    inView = true;
   }
+
+  let resizeFrame = 0;
+  window.addEventListener("resize", () => {
+    cancelAnimationFrame(resizeFrame);
+    resizeFrame = requestAnimationFrame(layout);
+  });
+
+  // Place the cards without animating them out from the centre on load.
+  carousel.classList.add("is-static");
+  goTo(0);
+  // A timer rather than rAF: rAF is paused in background tabs, which would
+  // leave the cards snapping between positions for good.
+  setTimeout(() => carousel.classList.remove("is-static"), 60);
 }
 
 /* ---------- Cursor binary trail ---------- */
@@ -337,7 +534,7 @@ if (finePointer && !reduceMotion) {
 /* ---------- Scroll reveal ---------- */
 const revealTargets = Array.from(
   document.querySelectorAll(
-    ".work-item, .about-text, .timeline li, .impact-cell, .accounts-table tbody tr, .reel-frame"
+    ".work-item, .about-text, .timeline li, .impact-cell, .accounts-table tbody tr, .carousel-stage"
   )
 );
 

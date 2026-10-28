@@ -78,6 +78,44 @@ body.booting { overflow: hidden; }
 
 .boot-log .ok { color: var(--white); }
 
+/* Runs the full width of the boot screen, matching the 4vw side padding. */
+.boot-progress {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  margin-top: 32px;
+}
+
+.boot-bar {
+  flex: 1;
+  height: 22px;
+  padding: 4px;
+  border: 1px solid var(--line-bright);
+}
+
+/* Segmented fill, like a terminal progress meter. Width is set by script.js. */
+.boot-fill {
+  display: block;
+  width: 0%;
+  height: 100%;
+  /* Same green as the impact and growth numbers. */
+  background: repeating-linear-gradient(90deg,
+    var(--accent) 0 10px,
+    transparent 10px 14px);
+  filter: drop-shadow(0 0 8px rgba(31,122,61,0.55));
+}
+
+/* Fixed width (room for "100%") so the bar doesn't shift as digits change. */
+.boot-pct {
+  min-width: 4ch;
+  font-size: clamp(20px, 2.2vw, 30px);
+  letter-spacing: -0.03em;
+  color: var(--white);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 .boot-skip {
   position: absolute;
   bottom: 30px;
@@ -202,16 +240,78 @@ body.booting { overflow: hidden; }
 
 /* ---------- Hero ---------- */
 .hero {
+  position: relative;
+  isolation: isolate; /* keeps the video's negative z-index inside the hero */
+  overflow: hidden;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+  align-items: center;
+  gap: 5vw;
   padding: 0 4vw;
   border-bottom: 1px solid var(--line);
   background:
     radial-gradient(ellipse 80% 50% at 20% 40%, rgba(232,232,227,0.045), transparent 70%),
     linear-gradient(180deg, var(--panel) 0%, var(--black) 100%);
 }
+
+/* Background loop, positioned out of the grid flow. The footage is bright in
+   the centre, so a scrim sits over it: heaviest on the left behind the copy,
+   fading into the page at the bottom so the hero doesn't end on a hard edge. */
+.hero-media {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.hero-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.05);
+}
+
+.hero-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(6,6,7,0.9) 0%, rgba(6,6,7,0.72) 50%, rgba(6,6,7,0.55) 100%),
+    linear-gradient(180deg, rgba(6,6,7,0) 55%, var(--black) 100%);
+}
+
+/* The site's --gray (#6f7175) is fine on flat black but drops to ~2.4:1 over
+   the brightest frames of the background loop. Inside the hero the small copy
+   uses a lighter gray that holds 4.5:1 across the whole loop. */
+.hero .eyebrow,
+.hero .hero-sub,
+.hero .hero-cta { color: #a8aaa6; }
+
+.hero-copy {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Same frame treatment as the reel so the two read as one system. */
+.hero-portrait {
+  position: relative;
+  aspect-ratio: 4/5;
+  border: 1px solid var(--line-bright);
+  background: var(--panel);
+}
+
+.hero-portrait img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+  filter: grayscale(1) contrast(1.05);
+}
+
+.hero-portrait .frame-label { z-index: 1; }
 
 .eyebrow {
   font-size: 12px;
@@ -268,62 +368,190 @@ body.booting { overflow: hidden; }
   background: rgba(232,232,227,0.05);
 }
 
-/* ---------- Reel ---------- */
-.reel {
-  padding: 7vw 4vw;
+/* ---------- Brands marquee ---------- */
+.brands {
+  display: flex;
+  align-items: center;
+  gap: 4vw;
+  padding: 26px 0 26px 4vw;
   border-bottom: 1px solid var(--line);
+  overflow: hidden;
 }
 
-/* 4:5 to match the source (1080x1350). Capped and centred — a full-bleed
-   portrait frame would be taller than most viewports. */
-.reel-frame {
+.brands-label {
+  flex: none;
+  font-size: 12px;
+  color: var(--gray);
+  letter-spacing: 0.04em;
+}
+
+/* Edges fade out so names slide in and out rather than being cut off. */
+.marquee {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+/* Two identical lists side by side; sliding the pair left by exactly one
+   list's width (-50%) lands on an identical frame, so the loop never jumps. */
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 32s linear infinite;
+}
+
+.marquee:hover .marquee-track { animation-play-state: paused; }
+
+.marquee-list {
+  display: flex;
+  flex: none;
+}
+
+/* Logos are recoloured to flat white and dimmed; each sets its own height via
+   --logo-h because wordmarks, symbols and stacked marks read at different
+   sizes. Text entries (no logo available) match the logos' tone. */
+.marquee-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: clamp(48px, 6vw, 96px);
+  opacity: 0.55;
+  transition: opacity 0.3s var(--ease);
+}
+
+.marquee-list li:hover { opacity: 1; }
+
+.marquee-list img {
+  display: block;
+  height: var(--logo-h, 26px);
+  width: auto;
+  filter: brightness(0) invert(1);
+}
+
+.marquee-list span {
+  font-size: clamp(18px, 2vw, 26px);
+  letter-spacing: -0.03em;
+  color: var(--white);
+  white-space: nowrap;
+}
+
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+
+/* ---------- Reel carousel ---------- */
+.reel { border-bottom: 1px solid var(--line); }
+
+/* Coverflow: the centred card faces forward and the rest are pushed back and
+   turned toward it. script.js sets each slide's transform from its offset. */
+.carousel {
+  --card-w: clamp(220px, 24vw, 340px);
   position: relative;
-  width: 100%;
-  max-width: 440px;
-  margin: 0 auto;
-  aspect-ratio: 4/5;
-  border: 1px solid var(--line-bright);
-  background:
-    repeating-linear-gradient(45deg,
-      rgba(232,232,227,0.014) 0px,
-      rgba(232,232,227,0.014) 1px,
-      transparent 1px,
-      transparent 9px),
-    var(--panel);
+  padding: 1vw 0 5vw;
+  outline: none;
 }
 
-.reel-video {
+/* Above the page-wide grain/scanline/vignette layers (z-index 900) so the
+   videos play clean; still under the cursor trail (905) and header (950).
+   Nothing between here and <body> may create a stacking context, or this
+   z-index gets trapped underneath the texture again. */
+.carousel-stage {
+  position: relative;
+  z-index: 901;
+  height: calc(var(--card-w) * 16 / 9);
+  perspective: 1200px;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: var(--card-w);
+  aspect-ratio: 9 / 16;
+  margin-left: calc(var(--card-w) / -2);
+  border: 1px solid var(--line-bright);
+  background: var(--black);
+  cursor: pointer;
+  transition: transform 0.7s var(--ease), opacity 0.5s var(--ease), filter 0.5s var(--ease);
+}
+
+.slide.is-active {
+  cursor: default;
+  border-color: rgba(232,232,227,0.4);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+}
+
+.slide.is-hidden { pointer-events: none; }
+
+.carousel.is-static .slide { transition: none; }
+
+.carousel:focus-visible .slide.is-active {
+  outline: 1px solid var(--accent-hot);
+  outline-offset: 4px;
+}
+
+/* contain, not cover: the clips are a mix of 9:16, 4:5 and 4:3, and on-screen
+   captions near the edges must not be cropped. */
+.slide-video {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   background: var(--black);
 }
 
-/* Autoplay is only allowed while muted, so a spoken reel needs an obvious
-   way back to sound. Native controls stay for full agency. */
-.reel-sound {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 2;
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.02em;
+.slide .frame-label { z-index: 1; }
+
+.carousel-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 30px;
+  padding: 0 4vw;
+}
+
+.carousel-caption {
+  flex: 0 1 30ch;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.carousel-count { color: var(--dim); font-size: 11px; }
+
+.carousel-title {
   color: var(--white);
-  background: rgba(6,6,7,0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.carousel-btn {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--gray);
+  background: transparent;
   border: 1px solid var(--line-bright);
-  padding: 5px 10px;
+  padding: 9px 14px;
   cursor: pointer;
-  backdrop-filter: blur(6px);
   transition: color 0.25s var(--ease), border-color 0.25s var(--ease);
 }
 
-.reel-sound:hover,
-.reel-sound:focus-visible {
+.carousel-btn:hover,
+.carousel-btn:focus-visible {
   color: var(--accent-hot);
   border-color: var(--accent-hot);
 }
+
+.carousel-sound[aria-pressed="true"] { color: var(--white); }
 
 .frame-label {
   position: absolute;
@@ -361,7 +589,7 @@ body.booting { overflow: hidden; }
 
 .work-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   border-top: 1px solid var(--line);
 }
 
@@ -374,6 +602,26 @@ body.booting { overflow: hidden; }
 }
 
 .work-item:hover { background: rgba(232,232,227,0.028); }
+
+/* The name is the real link; its ::after stretches over the whole card so the
+   avatar and stats are clickable too, without nesting interactive elements. */
+.work-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+.work-item:has(.work-link) { cursor: pointer; }
+
+.work-link:focus-visible { outline: none; }
+.work-item:focus-within {
+  outline: 1px solid var(--accent-hot);
+  outline-offset: -1px;
+}
+
+/* Corner cue on hover that the card leads to Instagram. */
+.work-item:has(.work-link)::after { content: "instagram \2197"; }
 
 .work-item::after {
   content: attr(data-category);
@@ -419,11 +667,33 @@ body.booting { overflow: hidden; }
     var(--panel);
 }
 
-.work-thumb span {
-  font-size: 12px;
-  color: var(--gray);
+.work-thumb { position: relative; }
+
+.work-num {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  font-size: 11px;
+  color: var(--dim);
   letter-spacing: 0.12em;
 }
+
+/* Profile pictures as a large circle inside the frame. Instagram only serves
+   150px images when logged out, so these are upscaled; swap in larger
+   originals in assets/work/ to sharpen them. */
+.work-avatar {
+  display: block;
+  width: 84%;
+  height: auto; /* the height attribute would otherwise win over aspect-ratio */
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 50%;
+  outline: 1px solid var(--line-bright);
+  outline-offset: 6px;
+  transition: outline-color 0.4s var(--ease);
+}
+
+.work-item:hover .work-avatar { outline-color: rgba(232,232,227,0.45); }
 
 .work-meta h3 {
   font-size: 14px;
@@ -709,6 +979,11 @@ body.booting { overflow: hidden; }
 
 @media (prefers-reduced-motion: reduce) {
   .js .boot { display: none; }
+  .marquee-track { animation: none; width: auto; }
+  .marquee-list { flex-wrap: wrap; row-gap: 8px; }
+  .marquee-list[aria-hidden="true"] { display: none; }
+  .marquee { -webkit-mask-image: none; mask-image: none; }
+  .slide { transition: none; }
   .grain { animation: none; }
   /* Keep the colour shift, drop the strobing. */
   .impact-cell:hover .impact-num,
@@ -747,10 +1022,26 @@ body.booting { overflow: hidden; }
   .nav-toggle span { width: 20px; height: 1px; background: var(--white); }
 
   .work-grid { grid-template-columns: repeat(2, 1fr); }
-  /* An odd item count leaves the last card alone in its row — drop its right
-     border so there's no rule dangling into the empty cell. */
-  .work-item:last-child { border-right: none; }
+  /* Right-hand column sits against the page edge, so no divider. An odd item
+     count leaves the last card alone in its row; drop its border too so no
+     rule dangles into the empty cell. */
+  .work-item:nth-child(2n),
+  .work-item:last-child:nth-child(odd) { border-right: none; }
   .about-grid { grid-template-columns: 1fr; }
+
+  /* Stack the portrait under the copy; the hero no longer needs to fill the
+     viewport once it scrolls. */
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: auto;
+    padding: 120px 4vw 8vw;
+    gap: 48px;
+  }
+  .hero-portrait { width: 100%; max-width: 320px; }
+  .hero-media::after {
+    background:
+      linear-gradient(180deg, rgba(6,6,7,0.82) 0%, rgba(6,6,7,0.72) 60%, var(--black) 100%);
+  }
 
   .impact-grid { grid-template-columns: repeat(2, 1fr); }
   .impact-cell:nth-child(2) { border-right: none; }
@@ -758,6 +1049,10 @@ body.booting { overflow: hidden; }
 }
 
 @media (max-width: 560px) {
+  .carousel { --card-w: 58vw; }
+  .brands { flex-direction: column; align-items: stretch; gap: 14px; padding-right: 0; }
+  /* caption on its own row so the three buttons sit together underneath */
+  .carousel-caption { order: -1; flex-basis: 100%; }
   .work-grid { grid-template-columns: 1fr; }
   .work-item { border-right: none; }
 

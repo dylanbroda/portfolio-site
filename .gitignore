@@ -1,2 +1,10 @@
 .DS_Store
 __pycache__/
+
+# source footage (optimized copy is assets/hero.mp4)
+assets/b&w hero loop.mp4
+_cmp/
+# source videos (web-optimized copies live in assets/reel/)
+assets/rendyr - *.mp4
+assets/ai=max_productivity.mp4
+assets/Screenshot *.png
