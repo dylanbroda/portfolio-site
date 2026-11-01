@@ -375,6 +375,15 @@ if (carousel) {
     if (!v.getAttribute("src") && v.dataset.src) v.src = v.dataset.src;
   };
 
+  // Dropping the source puts the poster back, so a card that leaves the centre
+  // shows its thumbnail rather than freezing on whatever frame it reached.
+  const unload = (v) => {
+    if (!v.getAttribute("src")) return;
+    v.pause();
+    v.removeAttribute("src");
+    v.load();
+  };
+
   const setSound = (on) => {
     soundOn = on;
     soundBtn.textContent = on ? "[ mute ]" : "[ unmute ]";
@@ -399,7 +408,7 @@ if (carousel) {
   // visitors get posters and start a clip themselves by clicking it.
   const syncPlayback = () => {
     videos.forEach((v, i) => {
-      if (i !== active && !v.paused) v.pause();
+      if (i !== active) unload(v);
     });
     if (inView && !reduceMotion) play(videos[active]);
     else videos[active].pause();
@@ -408,9 +417,8 @@ if (carousel) {
   const goTo = (i) => {
     const next = ((i % n) + n) % n;
     if (next !== active) {
-      videos[active].pause();
+      unload(videos[active]);
       active = next;
-      if (videos[active].getAttribute("src")) videos[active].currentTime = 0;
     }
     layout();
     countEl.textContent = `${pad(active + 1)} / ${pad(n)}`;
