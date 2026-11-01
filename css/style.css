@@ -734,6 +734,22 @@ body.booting { overflow: hidden; }
   text-shadow: 0 0 16px rgba(232,232,227,0.16);
 }
 
+/* Revenue gets the same green as the impact and growth numbers. */
+.work-stats .stat-rev .v {
+  color: var(--accent);
+  text-shadow: 0 0 16px rgba(31,122,61,0.4);
+  text-shadow: 0 0 16px color-mix(in srgb, currentColor 40%, transparent);
+  transition: color 0.16s var(--ease);
+}
+
+.work-item:hover .stat-rev .v,
+.work-item:focus-within .stat-rev .v {
+  color: var(--accent-hot);
+  text-shadow: 0 0 22px rgba(46,204,113,0.55);
+  text-shadow: 0 0 22px color-mix(in srgb, currentColor 55%, transparent);
+  animation: num-flicker 0.52s steps(1, end);
+}
+
 /* ---------- Impact ---------- */
 .impact { border-bottom: 1px solid var(--line); }
 
@@ -990,7 +1006,9 @@ body.booting { overflow: hidden; }
   .impact-cell:hover .impact-num,
   .impact-cell:focus-within .impact-num,
   .accounts-table tbody tr:hover .acct-delta,
-  .accounts-table tbody tr:focus-within .acct-delta { animation: none; }
+  .accounts-table tbody tr:focus-within .acct-delta,
+  .work-item:hover .stat-rev .v,
+  .work-item:focus-within .stat-rev .v { animation: none; }
   .caret { animation: none; }
   .reveal { opacity: 1; transform: none; transition: none; }
   html { scroll-behavior: auto; }
