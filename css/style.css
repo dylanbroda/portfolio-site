@@ -904,6 +904,8 @@ body.booting { overflow: hidden; }
   color: var(--white);
 }
 
+.about-text p + p { margin-top: 1.2em; }
+
 .timeline li {
   display: grid;
   grid-template-columns: 72px 1fr;
